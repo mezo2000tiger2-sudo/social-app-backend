@@ -1,0 +1,3 @@
+declare const bootstrap: () => Promise<void>;
+export default bootstrap;
+//# sourceMappingURL=app.bootstrap.d.ts.map

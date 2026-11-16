@@ -1,0 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.eventEmitter = void 0;
+const node_events_1 = require("node:events");
+exports.eventEmitter = new node_events_1.EventEmitter();
+exports.eventEmitter.on("Confirm_email", (fn) => {
+    Promise.resolve(fn()).catch((err) => console.error("Confirm_email failed:", err));
+});
+//# sourceMappingURL=events.js.map
