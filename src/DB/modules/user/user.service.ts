@@ -42,6 +42,32 @@ class AuthService {
         res.locals.data = updatedUser;
         res.locals.statusCode = 200;
     };
+
+    searchUsers = async (req: Request, res: Response, next: NextFunction) => {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+        const search = String(req.query.search ?? "").replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&",
+        );
+
+        const users = await this._userRepo.find({
+            filter: {
+                $or: [
+                    { fName: new RegExp(search, "i") },
+                    { lName: new RegExp(search, "i") },
+                ],
+            },
+            options: {
+                select: "-password",
+                skip: (page - 1) * limit,
+                limit,
+            },
+        });
+
+        res.locals.data = users;
+        res.locals.statusCode = 200;
+    };
 }
 
 export default new AuthService();
