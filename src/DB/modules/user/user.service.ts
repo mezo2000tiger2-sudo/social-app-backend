@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { IUser } from "../../models/user.model.js";
 import { UserRepository } from "../../repositories/user.repository.js";
+import { Compare, Hash } from "../../../common/security/hash.js";
+import { AppError } from "../../../common/utils/globalErrorHandling.js";
 
 class AuthService {
     private readonly _userRepo = new UserRepository();
@@ -28,7 +30,7 @@ class AuthService {
             update: updateQuery,
         });
 
-        if (!updatedUser) throw new Error("user not found", { cause: 404 });
+        if (!updatedUser) throw new AppError("user not found", 404);
 
         res.locals.data = updatedUser;
         res.locals.statusCode = 200;
@@ -58,6 +60,32 @@ class AuthService {
 
         res.locals.data = users;
         res.locals.statusCode = 200;
+    };
+
+    updatePassword = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        const { oldpassword, newpassword } = req.body;
+        const user = req.user!;
+        if (!Compare(oldpassword, user.password)) {
+            throw new AppError("inValid old password", 401)
+        }
+        user.password = Hash(newpassword);
+        user.changeCredentialsAt = new Date();
+        const updatedUser = await this._userRepo.findByIdAndUpdate({
+            id: user._id,
+            update: {
+                password: user.password,
+                changeCredentialsAt: user.changeCredentialsAt,
+            },
+            
+        });
+
+        res.locals.data = updatedUser;
+        res.locals.statusCode = 201;
+        next();
     };
 }
 
