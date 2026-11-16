@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { AppError, GlobalErrorHandling } from "./common/utils/globalErrorHandling.js";
 import authRoute from "./DB/modules/auth/auth.controller.js";
+import userRoute from "./DB/modules/user/user.controller.js";
 import { GlobalSuccessResponse } from "./common/middleware/successResponse.js";
 import connectDb from "./DB/connectDB.js";
 import RedisService from "./DB/connectRedis.js";
@@ -36,6 +37,7 @@ const bootstrap = async () => {
     }));
 
     app.use('/auth',authRoute)
+    app.use('/users',userRoute)
     
     app.get('/',(req:Request,res:Response,next:NextFunction)=>{
         res.locals.message = 'welcome to my app'

@@ -3,9 +3,20 @@ import US from "./user.service.js";
 import { Validation } from "../../../common/middleware/validation.js";
 import { GlobalSuccessResponse } from "../../../common/middleware/successResponse.js";
 import { authentication } from "../../../common/middleware/authentecation.js";
+import {
+    searchUsersSchema,
+    updatePasswordSchema,
+    updateProfileSchema,
+} from "./user.validation.js";
 
-const authRoute = Router();
+const userRoute = Router();
 
-// authRoute.post('/signup',Validation(signUpSchema),AS.siginUp,GlobalSuccessResponse)
+userRoute.get("/profile", authentication, US.getProfile, GlobalSuccessResponse);
 
-export default authRoute;
+userRoute.patch("/profile", authentication, Validation(updateProfileSchema), US.updateProfile, GlobalSuccessResponse);
+
+userRoute.get("/search", authentication, Validation(searchUsersSchema), US.searchUsers, GlobalSuccessResponse);
+
+userRoute.patch("/password", authentication, Validation(updatePasswordSchema), US.updatePassword, GlobalSuccessResponse);
+
+export default userRoute;
