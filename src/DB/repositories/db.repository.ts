@@ -82,4 +82,18 @@ export abstract class DBRepository<T> {
     return await this.model.findByIdAndUpdate(id, update, { new: true, runValidators: true, ...options })
 }
 
+    deleteOne = async ({ filter, options = {} } : {
+        filter: QueryFilter<T>,
+        options?: QueryOptions<T>
+    }) => {
+        return await this.model.deleteOne(filter).setOptions(options).exec();
+    };
+
+    findOneAndDelete = async ({ filter, options = {} } : {
+        filter: QueryFilter<T>,
+        options?: QueryOptions<T>
+    }) => {
+        return await this.model.findOneAndDelete(filter, options);
+    };
+
 }
