@@ -16,8 +16,7 @@ export interface IUser {
     age: number;
     providor:providorEnum,
     isDeleted?:Boolean,
-    changeCredentialsAt?:Date
-
+    changeCredentialsAt?:Date,
 }
 
 const userSchema = new mongoose.Schema<IUser>({

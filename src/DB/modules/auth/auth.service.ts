@@ -10,7 +10,11 @@ import { eventEmitter } from "../../../common/utils/events.js";
 import { providorEnum } from "../../../common/enum/user.enum.js";
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
+import { CLIENT_ID } from "../../../config/config.service.js";
 import { SendEmailOtp } from "./auth.helper.js";
+
+const googleClient = new OAuth2Client(CLIENT_ID);
 
 class AuthService {
     private readonly _userRepo = new UserRepository();
@@ -100,7 +104,10 @@ class AuthService {
             expiresIn: "7d",
             jwtid: tokenId,
         });
-        res.locals.data = { access_token, refresh_token };
+        res.locals.data = {
+            user: { name: `${user.fName} ${user.lName}`, email: user.email },
+            token: { access_token, refresh_token },
+        };
         res.locals.message = "signed in successfully";
         res.locals.statusCode = 201;
         next();
@@ -214,6 +221,64 @@ class AuthService {
         if (!user) throw new Error("user not exist or not confirmed");
         await RedisService.deleteKey(`otp::${email}`);
         next()
+    };
+
+    signUpWithGmail = async (req: Request, res: Response, next: NextFunction) => {
+        const { idToken } = req.body;
+
+        const decoded = await googleClient.verifyIdToken({
+            idToken,
+            audience: CLIENT_ID,
+        });
+
+        const { picture, given_name, family_name, email, email_verified } =decoded.getPayload()!;
+
+        let user = await this._userRepo.findOne({
+            filter: {
+                email: email!.toLowerCase(),
+            },
+        });
+
+        if (!user) {
+            const [created] = await this._userRepo.create({
+                fName: given_name!,
+                lName: family_name!,
+                email: email!,
+                profileImage: picture!,
+                isConfirmed: Boolean(email_verified),
+                providor: providorEnum.google,
+                password: Hash(randomUUID()),
+                
+            });
+            if (!created) {
+                throw new AppError("User creation failed", 500);
+            }
+            user = created;
+        }
+
+        if (user.providor !== providorEnum.google) {
+            throw new AppError(
+                `login with your original provider = ${user.providor}`,
+                400,
+            );
+        }
+
+        const tokenId = randomUUID();
+        const access_token = jwt.sign({ userId: user._id }, "y-access", {
+            expiresIn: 60 * 5,
+            jwtid: tokenId,
+        });
+        const refresh_token = jwt.sign({ userId: user._id }, "y-refresh", {
+            expiresIn: "7d",
+            jwtid: tokenId,
+        });
+
+        res.locals.data = {
+            user: { name: `${user.fName} ${user.lName}`, email: user.email },
+            token: { access_token, refresh_token },
+        };
+        res.locals.statusCode = 200;
+        next();
     };
 }
 

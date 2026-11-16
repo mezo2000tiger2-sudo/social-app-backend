@@ -1,15 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { IUser } from "../../models/user.model.js";
-import { AppError } from "../../../common/utils/globalErrorHandling.js";
 import { UserRepository } from "../../repositories/user.repository.js";
-import RedisService from "../../connectRedis.js";
-import { Compare, Hash } from "../../../common/security/hash.js";
-import { generat_otp, sendEmail } from "../../../common/utils/sendEmail.js";
-import { emailTemplate } from "../../../common/utils/email.template.js";
-import { eventEmitter } from "../../../common/utils/events.js";
-import { providorEnum } from "../../../common/enum/user.enum.js";
-import { randomUUID } from "node:crypto";
-import jwt from "jsonwebtoken";
 
 class AuthService {
     private readonly _userRepo = new UserRepository();
