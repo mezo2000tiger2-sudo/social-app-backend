@@ -13,7 +13,11 @@ export const Validation =(schema:SchemaType)=>{
             const validator = schema[key].safeParse(req[key])
             if(!validator.success){
                 ResultError.push(...validator.error.issues)
+                continue
             }
+            // keep the parsed value so transforms (trim, ...) reach the handler.
+            // only `body` is assigned because req.query/req.params are getters in Express 5
+            if(key === 'body') req.body = validator.data
         }
 
         if(ResultError.length>0){

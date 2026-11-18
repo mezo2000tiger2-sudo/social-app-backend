@@ -60,9 +60,12 @@ const userSchema = new mongoose_1.default.Schema({
     },
     phone: Number,
     profileImage: String,
-    isConfirmed: {
-        type: Boolean,
-        default: false,
+    isConfirmed: Boolean,
+    changeCredentialsAt: Date,
+    isDeleted: Boolean,
+    providor: {
+        type: String,
+        default: user_enum_js_1.providorEnum.system,
     }
 }, {
     timestamps: true,

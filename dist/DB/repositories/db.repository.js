@@ -9,8 +9,8 @@ class DBRepository {
     create = async (data) => {
         return await this.model.create([data]);
     };
-    findOne = async ({ filter, options = {}, projection = {} }) => {
-        return await this.model.findOne(filter, options);
+    findOne = async ({ filter, options = {}, }) => {
+        return await this.model.findOne(filter, undefined, options);
     };
     find = async ({ filter = {}, options = {} }) => {
         const { limit, skip, sort, lean, populate, select, session } = options;
@@ -50,6 +50,15 @@ class DBRepository {
     };
     updateOne = async ({ filter, update, options = {} }) => {
         return await this.model.updateOne(filter, update, options);
+    };
+    findByIdAndUpdate = async ({ id, update, options = {} }) => {
+        return await this.model.findByIdAndUpdate(id, update, { new: true, runValidators: true, ...options });
+    };
+    deleteOne = async ({ filter, options = {} }) => {
+        return await this.model.deleteOne(filter).setOptions(options).exec();
+    };
+    findOneAndDelete = async ({ filter, options = {} }) => {
+        return await this.model.findOneAndDelete(filter, options);
     };
 }
 exports.DBRepository = DBRepository;

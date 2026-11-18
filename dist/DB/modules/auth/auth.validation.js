@@ -33,27 +33,72 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signUpSchema = void 0;
+exports.signUpWithGmailSchema = exports.logoutSchema = exports.resetPasswordSchema = exports.refreshToeknSchema = exports.resendOtpSchema = exports.confirmEmailSchema = exports.signInSchema = exports.signUpSchema = void 0;
 const z = __importStar(require("zod"));
 const user_enum_js_1 = require("../../../common/enum/user.enum.js");
+const emailField = z.string().trim().email("invalid email address");
+const passwordField = z.string().regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, "password must be at least 8 characters long and contain at least one letter and one number");
+const token = z.looseObject({
+    authorization: z
+        .string({ error: "authorization is required" })
+        .min(1, "authorization is required")
+        .regex(/^Bearer\s+\S+$/, "authorization must be in the format: Bearer <token>"),
+    connection: z.string().optional(),
+    "accept-encoding": z.string().optional(),
+    accept: z.string().optional(),
+    "user-agent": z.string().optional(),
+    host: z.string().optional(),
+    "content-length": z.string().optional(),
+    "postman-token": z.string().optional(),
+    "content-type": z.string().optional(),
+});
+const otpField = z.string().trim().regex(/^\d{6}$/, "otp must be 6 digits");
 exports.signUpSchema = {
     body: z.strictObject({
-        fName: z.string().min(3, 'first name must be at least 3 characters').max(20, 'first name must be at most 20 characters'),
-        lName: z.string().min(3, 'last name must be at least 3 characters').max(20, 'last name must be at most 20 characters'),
-        email: z.string().email('invalid email address'),
-        password: z.string().regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, 'password must be at least 8 characters long and contain at least one letter and one number'),
-        gender: z.enum([user_enum_js_1.GenderEnum.male, user_enum_js_1.GenderEnum.female], 'gender must be either male or female').optional(),
+        fName: z.string().min(3, "first name must be at least 3 characters").max(20, "first name must be at most 20 characters"),
+        lName: z.string().min(3, "last name must be at least 3 characters").max(20, "last name must be at most 20 characters"),
+        email: emailField,
+        password: passwordField,
+        gender: z.enum([user_enum_js_1.GenderEnum.male, user_enum_js_1.GenderEnum.female], "gender must be either male or female").optional(),
         phone: z.number().optional(),
-        age: z.number().min(18, 'age must be at least 18').max(100, 'age must be at most 100'),
-    })
-    // .superRefine((value ,ctx)=>{
-    //     if(value.password !== value.classpassword){
-    //         ctx.addIssue({
-    //             code:'custom',
-    //             message:'password and classpassword must be the same',
-    //             origin: 'cpassword'
-    //         })
-    //     }
-    // })
+        age: z.number().min(18, "age must be at least 18").max(100, "age must be at most 100"),
+    }),
+};
+exports.signInSchema = {
+    body: z.strictObject({
+        email: emailField,
+        password: z.string().min(1),
+    }),
+};
+exports.confirmEmailSchema = {
+    body: z.strictObject({
+        email: emailField,
+        otp: otpField,
+    }),
+};
+exports.resendOtpSchema = {
+    body: z.strictObject({
+        email: emailField,
+    }),
+};
+exports.refreshToeknSchema = {
+    headers: token
+};
+exports.resetPasswordSchema = {
+    body: z.strictObject({
+        email: emailField,
+        otp: otpField,
+        password: passwordField,
+    }),
+};
+exports.logoutSchema = {
+    query: z.strictObject({
+        flag: z.literal("all").optional(),
+    }),
+};
+exports.signUpWithGmailSchema = {
+    body: z.strictObject({
+        idToken: z.string().min(1, "idToken is required"),
+    }),
 };
 //# sourceMappingURL=auth.validation.js.map

@@ -18,3 +18,7 @@ export const EMAIL=process.env.EMAIL!
 export const PASSWORD=process.env.PASSWORD!
 export const CLIENT_SECRET=process.env.CLIENT_SECRET!
 export const CLIENT_ID=process.env.CLIENT_ID!
+export const AWS_REIGION=process.env.AWS_REIGION!
+export const AWS_S3_BUCKET_NAME=process.env.AWS_S3_BUCKET_NAME!
+export const AWS_S3_ACCESS_KEY=process.env.AWS_S3_ACCESS_KEY!
+export const AWS_S3_Secret_ACCESS_KEY=process.env.AWS_S3_Secret_ACCESS_KEY!

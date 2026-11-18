@@ -1,4 +1,4 @@
-import { Model, MongooseUpdateQueryOptions, ProjectionType, UpdateQuery } from "mongoose";
+import { Model, MongooseUpdateQueryOptions, Types, UpdateQuery } from "mongoose";
 import { QueryFilter, QueryOptions } from "mongoose";
 export declare abstract class DBRepository<T> {
     readonly model: Model<T>;
@@ -6,13 +6,12 @@ export declare abstract class DBRepository<T> {
     create: (data: Partial<T>) => Promise<import("mongoose").IfAny<T, any, import("mongoose").Document<unknown, {}, T, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<T> & {
         __v: number;
     } & import("mongoose").AddDefaultId<T, {}, import("mongoose").DefaultSchemaOptions>>[]>;
-    findOne: ({ filter, options, projection }: {
+    findOne: ({ filter, options, }: {
         filter: QueryFilter<T>;
-        projection?: ProjectionType<T>;
         options?: QueryOptions<T>;
-    }) => Promise<import("mongoose").IfAny<Omit<T, Extract<string, keyof T>> | (Pick<T, Extract<string, keyof T>> & Pick<T, Extract<"_id", keyof T>>), any, import("mongoose").Document<unknown, {}, Omit<T, Extract<string, keyof T>> | (Pick<T, Extract<string, keyof T>> & Pick<T, Extract<"_id", keyof T>>), {}, import("mongoose").DefaultSchemaOptions> & (((import("mongoose").Require_id<Omit<T, Extract<string, keyof T>>> | import("mongoose").Require_id<Pick<T, Extract<string, keyof T>> & Pick<T, Extract<"_id", keyof T>>>) & {
+    }) => Promise<import("mongoose").IfAny<T, any, import("mongoose").Document<unknown, {}, T, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<T> & {
         __v: number;
-    }) & (import("mongoose").AddDefaultId<Omit<T, Extract<string, keyof T>>, {}, import("mongoose").DefaultSchemaOptions> | import("mongoose").AddDefaultId<Pick<T, Extract<string, keyof T>> & Pick<T, Extract<"_id", keyof T>>, {}, import("mongoose").DefaultSchemaOptions>))> | null>;
+    } & import("mongoose").AddDefaultId<T, {}, import("mongoose").DefaultSchemaOptions>> | null>;
     find: ({ filter, options }: {
         filter?: QueryFilter<T>;
         options?: QueryOptions<T>;
@@ -41,5 +40,22 @@ export declare abstract class DBRepository<T> {
         update: UpdateQuery<T>;
         options?: MongooseUpdateQueryOptions;
     }) => Promise<import("mongoose").UpdateWriteOpResult>;
+    findByIdAndUpdate: ({ id, update, options }: {
+        id: Types.ObjectId;
+        update: UpdateQuery<T>;
+        options?: MongooseUpdateQueryOptions;
+    }) => Promise<import("mongoose").IfAny<T, any, import("mongoose").Document<unknown, {}, T, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<T> & {
+        __v: number;
+    } & import("mongoose").AddDefaultId<T, {}, import("mongoose").DefaultSchemaOptions>> | null>;
+    deleteOne: ({ filter, options }: {
+        filter: QueryFilter<T>;
+        options?: QueryOptions<T>;
+    }) => Promise<import("mongodb").DeleteResult>;
+    findOneAndDelete: ({ filter, options }: {
+        filter: QueryFilter<T>;
+        options?: QueryOptions<T>;
+    }) => Promise<import("mongoose").IfAny<T, any, import("mongoose").Document<unknown, {}, T, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Require_id<T> & {
+        __v: number;
+    } & import("mongoose").AddDefaultId<T, {}, import("mongoose").DefaultSchemaOptions>> | null>;
 }
 //# sourceMappingURL=db.repository.d.ts.map

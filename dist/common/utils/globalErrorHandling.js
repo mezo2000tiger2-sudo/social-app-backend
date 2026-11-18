@@ -3,9 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GlobalErrorHandling = exports.AppError = void 0;
 class AppError extends Error {
     StatusCode;
-    constructor(message, StatusCode) {
+    details;
+    constructor(message, StatusCode, details) {
         super(message);
         this.StatusCode = StatusCode;
+        this.details = details;
     }
 }
 exports.AppError = AppError;
@@ -14,6 +16,7 @@ const GlobalErrorHandling = async (err, req, res, next) => {
     res.status(statusCode).send({
         success: false,
         message: err.message,
+        ...(err.details !== undefined ? { details: err.details } : {}),
         stack: err.stack
     });
 };

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { GenderEnum, roleEnum } from "../../common/enum/user.enum.js";
+import { GenderEnum, providorEnum, roleEnum } from "../../common/enum/user.enum.js";
 export interface IUser {
     fName: string;
     lName: string;
@@ -11,6 +11,9 @@ export interface IUser {
     isConfirmed: Boolean;
     phone?: number | undefined;
     age: number;
+    providor: providorEnum;
+    isDeleted?: Boolean;
+    changeCredentialsAt?: Date;
 }
 declare const userModel: mongoose.Model<IUser>;
 export default userModel;

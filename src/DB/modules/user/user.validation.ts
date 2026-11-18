@@ -8,9 +8,9 @@ export const updateProfileSchema = {
     .strictObject({
       fName: z.string().min(3, 'first name must be at least 3 characters').max(20, 'first name must be at most 20 characters'),
       lName: z.string().min(3, 'last name must be at least 3 characters').max(20, 'last name must be at most 20 characters'),
-      age: z.number().min(18, 'age must be at least 18').max(100, 'age must be at most 100'),
+      age: z.coerce.number().min(18, 'age must be at least 18').max(100, 'age must be at most 100'),
       gender: z.enum([GenderEnum.male, GenderEnum.female], 'gender must be either male or female'),
-      phone: z.number(),
+      phone: z.coerce.number(),
     })
     .partial()
     .refine((value) => Object.keys(value).length > 0, {

@@ -10,6 +10,7 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const helmet_1 = __importDefault(require("helmet"));
 const globalErrorHandling_js_1 = require("./common/utils/globalErrorHandling.js");
 const auth_controller_js_1 = __importDefault(require("./DB/modules/auth/auth.controller.js"));
+const user_controller_js_1 = __importDefault(require("./DB/modules/user/user.controller.js"));
 const successResponse_js_1 = require("./common/middleware/successResponse.js");
 const connectDB_js_1 = __importDefault(require("./DB/connectDB.js"));
 const connectRedis_js_1 = __importDefault(require("./DB/connectRedis.js"));
@@ -32,6 +33,7 @@ const bootstrap = async () => {
         origin: '*'
     }));
     app.use('/auth', auth_controller_js_1.default);
+    app.use('/users', user_controller_js_1.default);
     app.get('/', (req, res, next) => {
         res.locals.message = 'welcome to my app';
         res.locals.statusCode = 200;

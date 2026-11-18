@@ -9,7 +9,7 @@ import { emailTemplate } from "../../../common/utils/email.template.js";
 import { eventEmitter } from "../../../common/utils/events.js";
 import { providorEnum } from "../../../common/enum/user.enum.js";
 import { randomUUID } from "node:crypto";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { CLIENT_ID } from "../../../config/config.service.js";
 import { SendEmailOtp } from "./auth.helper.js";
@@ -116,6 +116,7 @@ class AuthService {
     confrimEmail = async (req: Request, res: Response, next: NextFunction) => {
         const { email, otp } = req.body;
         const normalizedEmail = String(email).trim().toLowerCase();
+        const normalizedOtp = String(otp).trim();
 
         const otpValue = await RedisService.getValue({
             key: `otp::${normalizedEmail}`,
@@ -124,7 +125,7 @@ class AuthService {
         if (!otpValue) {
             throw new AppError("otp expired", 400);
         }
-        if (!Compare(otp, otpValue)) {
+        if (!Compare(normalizedOtp, otpValue)) {
             throw new AppError("otp invalid", 400);
         }
         const user = await this._userRepo.findOneAndUpdate({
@@ -132,9 +133,9 @@ class AuthService {
             update: { isConfirmed: true },
         });
         if (user) {
-            RedisService.deleteKey(`otp::${email}`);
-            RedisService.deleteKey(`otp::max::${email}`);
-            RedisService.deleteKey(`otp::block::${email}`);
+            RedisService.deleteKey(`otp::${normalizedEmail}`);
+            RedisService.deleteKey(`otp::max::${normalizedEmail}`);
+            RedisService.deleteKey(`otp::block::${normalizedEmail}`);
         }
 
         if (!user) {
@@ -155,15 +156,15 @@ class AuthService {
         next();
     };
 
-    logout = async(req: Request, res: Response, next: NextFunction) => {
+    logout = async (req: Request, res: Response, next: NextFunction) => {
         const { flag } = req.query;
         const user = req.user;
-        const payload =req.payload;
-        if(!user){
-            throw new AppError('error finding user')
+        const payload = req.payload;
+        if (!user) {
+            throw new AppError("error finding user");
         }
-        if(!payload){
-            throw new AppError('error finding payload')
+        if (!payload) {
+            throw new AppError("error finding payload");
         }
         if (flag && flag === "all") {
             user.changeCredentialsAt = new Date();
@@ -172,7 +173,9 @@ class AuthService {
                 update: { changeCredentialsAt: user.changeCredentialsAt },
             });
 
-            const revokeKeys = await RedisService.keys(`revoke_token::${user._id}`);
+            const revokeKeys = await RedisService.keys(
+                `revoke_token::${user._id}`,
+            );
             for (const key of revokeKeys) {
                 await RedisService.deleteKey(key);
             }
@@ -187,10 +190,14 @@ class AuthService {
             });
         }
         res.locals.statusCode = 201;
-        next()
+        next();
     };
 
-    forgetPassword = async(req: Request, res: Response, next: NextFunction) => {
+    forgetPassword = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
         const { email } = req.body;
         await SendEmailOtp({
             email,
@@ -198,19 +205,23 @@ class AuthService {
             subject: "forget password",
         });
 
-        next()
+        next();
     };
 
-    resetPassword = async(req: Request, res: Response, next: NextFunction) => {
+    resetPassword = async (req: Request, res: Response, next: NextFunction) => {
         const { email, otp, password } = req.body;
-        const otpValue = await RedisService.getValue({ key: `otp::${email}` });
+        const normalizedEmail = String(email).trim().toLowerCase();
+        const normalizedOtp = String(otp).trim();
+        const otpValue = await RedisService.getValue({
+            key: `otp::${normalizedEmail}`,
+        });
         if (!otpValue) throw new Error(`token expire`);
-        if (!Compare(otp, otpValue)) {
+        if (!Compare(normalizedOtp, otpValue)) {
             throw new Error("otp invalid", { cause: 400 });
         }
         const user = await this._userRepo.findOneAndUpdate({
             filter: {
-                email,
+                email: normalizedEmail,
                 isConfirmed: { $exists: true },
             },
             update: {
@@ -219,11 +230,15 @@ class AuthService {
             },
         });
         if (!user) throw new Error("user not exist or not confirmed");
-        await RedisService.deleteKey(`otp::${email}`);
-        next()
+        await RedisService.deleteKey(`otp::${normalizedEmail}`);
+        next();
     };
 
-    signUpWithGmail = async (req: Request, res: Response, next: NextFunction) => {
+    signUpWithGmail = async (
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) => {
         const { idToken } = req.body;
 
         const decoded = await googleClient.verifyIdToken({
@@ -231,7 +246,8 @@ class AuthService {
             audience: CLIENT_ID,
         });
 
-        const { picture, given_name, family_name, email, email_verified } =decoded.getPayload()!;
+        const { picture, given_name, family_name, email, email_verified } =
+            decoded.getPayload()!;
 
         let user = await this._userRepo.findOne({
             filter: {
@@ -248,7 +264,6 @@ class AuthService {
                 isConfirmed: Boolean(email_verified),
                 providor: providorEnum.google,
                 password: Hash(randomUUID()),
-                
             });
             if (!created) {
                 throw new AppError("User creation failed", 500);
@@ -276,6 +291,65 @@ class AuthService {
         res.locals.data = {
             user: { name: `${user.fName} ${user.lName}`, email: user.email },
             token: { access_token, refresh_token },
+        };
+        res.locals.statusCode = 200;
+        next();
+    };
+    refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+        const { authorization } = req.headers;
+
+        if (!authorization) {
+            return res
+                .status(401)
+                .json({ message: "authorization is required" });
+        }
+
+        const [scheme, token] = authorization.split(" ");
+        if (scheme !== "Bearer" || !token) {
+            return res
+                .status(401)
+                .json({ message: "invalid authorization format" });
+        }
+
+        let payload: string | JwtPayload;
+        try {
+            payload = jwt.verify(token, "y-refresh");
+        } catch {
+            throw new AppError("invalid or expired refresh token", 401);
+        }
+
+        if (typeof payload === "string" || !payload.userId) {
+            throw new AppError("invalid refresh token", 401);
+        }
+
+        const user = await this._userRepo.findOne({
+            filter: {
+                _id: payload.userId,
+            },
+        });
+        if (!user) {
+            throw new AppError("user not found with this refresh token", 404);
+        }
+
+        if ((user.changeCredentialsAt?.getTime() ?? 0) > (payload.iat ?? 0) * 1000) {
+            throw new AppError("token has expired", 401);
+        }
+
+        const revokedTtl = await RedisService.getTTL({
+            key: `revoke_token::${user._id}::${payload.jti}`,
+        });
+        if (revokedTtl > 0) {
+            throw new AppError("invalid revoked token, login again", 401);
+        }
+
+        const access_token = jwt.sign({ userId: user._id }, "y-access", {
+            expiresIn: 60 * 5,
+            jwtid: payload.jti,
+        });
+
+        res.locals.data = {
+            user: { name: `${user.fName} ${user.lName}`, email: user.email },
+            token: { access_token },
         };
         res.locals.statusCode = 200;
         next();

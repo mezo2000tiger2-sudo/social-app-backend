@@ -1,5 +1,5 @@
 export const MulterEnum = {
-    image: ["jpg", "png"],
+    image: ["image/jpeg", "image/png",'image/jpg','image/git','image/webp'],
 };
 export enum StoreEnum  {
     memory= 'memory',
