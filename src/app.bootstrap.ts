@@ -38,6 +38,10 @@ const bootstrap = async () => {
 
     app.use('/auth',authRoute)
     app.use('/users',userRoute)
+    app.get('/upload/*path',(req:Request,res:Response,next:NextFunction)=>{
+        const {path} =req.params as {path:string[]}
+        const Key=path.join('/')
+    })
     
     app.get('/',(req:Request,res:Response,next:NextFunction)=>{
         res.locals.message = 'welcome to my app'

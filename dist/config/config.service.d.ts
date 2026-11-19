@@ -11,4 +11,5 @@ export declare const AWS_REIGION: string;
 export declare const AWS_S3_BUCKET_NAME: string;
 export declare const AWS_S3_ACCESS_KEY: string;
 export declare const AWS_S3_Secret_ACCESS_KEY: string;
+export declare const AWS_S3_ENDPOINT: string;
 //# sourceMappingURL=config.service.d.ts.map

@@ -4,7 +4,7 @@ import { Validation } from "../../../common/middleware/validation.js";
 import { GlobalSuccessResponse } from "../../../common/middleware/successResponse.js";
 import { authentication } from "../../../common/middleware/authentecation.js";
 import multerCloud from "../../../common/middleware/multer.cloud.js";
-import { MulterEnum } from "../../../common/enum/multer.enum.js";
+import { MulterEnum, StoreEnum } from "../../../common/enum/multer.enum.js";
 import {
     searchUsersSchema,
     updatePasswordSchema,
@@ -18,7 +18,7 @@ userRoute.get("/profile", authentication, US.getProfile, GlobalSuccessResponse);
 userRoute.patch(
     "/profile",
     authentication,
-    multerCloud({}).single("profileImage"),
+    multerCloud({store_type:StoreEnum.disk}).single("profileImage"),
     Validation(updateProfileSchema),
     US.updateProfile,
     GlobalSuccessResponse,

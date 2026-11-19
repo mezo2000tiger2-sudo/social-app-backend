@@ -34,6 +34,10 @@ const bootstrap = async () => {
     }));
     app.use('/auth', auth_controller_js_1.default);
     app.use('/users', user_controller_js_1.default);
+    app.get('/upload/*path', (req, res, next) => {
+        const { path } = req.params;
+        const Key = path.join('/');
+    });
     app.get('/', (req, res, next) => {
         res.locals.message = 'welcome to my app';
         res.locals.statusCode = 200;
