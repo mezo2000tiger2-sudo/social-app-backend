@@ -4,6 +4,9 @@ import {
     ObjectCannedACL,
     PutObjectCommand,
     S3Client,
+    ListObjectsCommand,
+    DeleteObjectCommand,
+    DeleteObjectsCommand
 } from "@aws-sdk/client-s3";
 import {
     AWS_REIGION,
@@ -15,8 +18,9 @@ import {
 import { StoreEnum } from "../enum/multer.enum.js";
 import { createReadStream } from "node:fs";
 import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-export class S3Service {
+export default class S3Service {
     private readonly client: S3Client;
     constructor() {
         this.client = new S3Client({
@@ -51,14 +55,6 @@ export class S3Service {
                     ? file.buffer
                     : createReadStream(file.path),
             ContentType: file.mimetype,
-        });
-        await this.client.send(command);
-        return command.input.Key;
-    }
-    async getFile(Key: string) {
-        const command = new GetObjectCommand({
-            Key,
-            Bucket: AWS_S3_BUCKET_NAME,
         });
         await this.client.send(command);
         return command.input.Key;
@@ -123,5 +119,88 @@ export class S3Service {
         });
         const result = await command.done();
         return result.Key;
+    }
+    async deleteFile(Key: string) {
+        const command = new DeleteObjectCommand({
+            Key,
+            Bucket: AWS_S3_BUCKET_NAME,
+        });
+        return await this.client.send(command);
+    }
+    async deleteFiles(Keys: string[]) {
+        const mappedKeys=Keys.map((key)=>{
+            return {Key:key}
+        })
+        const command = new DeleteObjectsCommand({
+            Delete:{
+                Objects:mappedKeys
+            },
+            Bucket: AWS_S3_BUCKET_NAME,
+        });
+        return await this.client.send(command);
+    }
+    async getFile(Key: string) {
+        const command = new GetObjectCommand({
+            Key,
+            Bucket: AWS_S3_BUCKET_NAME,
+        });
+        return await this.client.send(command);
+    }
+    async getFiles(FolderName: string) {
+        const command = new ListObjectsCommand({
+            Prefix:`social_media_app/${FolderName}`,
+            Bucket: AWS_S3_BUCKET_NAME,
+        });
+        return await this.client.send(command);
+    }
+    async deleteFolder(FolderName: string) {
+        const {Contents}=await this.getFiles(FolderName)
+        const mappedData=Contents?.map((k)=>{
+            return k.Key
+        })
+        return this.deleteFiles(mappedData as string[])
+    }
+    async createPreSignedUrl({
+        path = "General",
+        ContentType,
+        fileName,
+        expiresIn,
+    }: {
+        path?: string;
+        ContentType: string;
+        fileName: string;
+        expiresIn?: number;
+    }) {
+        const Key = `social_media_app/${path}/${randomUUID()}__${fileName}`;
+        const command = new PutObjectCommand({
+            Bucket: AWS_S3_BUCKET_NAME,
+            Key,
+            ContentType,
+        });
+        const url = await getSignedUrl(this.client, command, {
+            expiresIn: expiresIn ?? 60,
+        });
+        return { url, Key };
+    }
+    async getPreSignedUrl({
+        Key,
+        expiresIn,
+        download,
+    }: {
+        Key: string;
+        expiresIn?: number;
+        download: Boolean;
+    }) {
+        const command = new GetObjectCommand({
+            Bucket: AWS_S3_BUCKET_NAME,
+            Key,
+            ResponseContentDisposition: download
+                ? `attachment; filename="${Key.split("/").pop()}"`
+                : undefined,
+        });
+        const url = await getSignedUrl(this.client, command, {
+            expiresIn: expiresIn ?? 60,
+        });
+        return url;
     }
 }

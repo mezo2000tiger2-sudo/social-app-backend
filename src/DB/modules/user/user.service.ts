@@ -3,7 +3,7 @@ import { IUser } from "../../models/user.model.js";
 import { UserRepository } from "../../repositories/user.repository.js";
 import { Compare, Hash } from "../../../common/security/hash.js";
 import { AppError } from "../../../common/utils/globalErrorHandling.js";
-import { S3Service } from "../../../common/security/s3.service.js";
+import S3Service  from "../../../common/security/s3.service.js";
 
 class AuthService {
     private readonly _userRepo = new UserRepository();

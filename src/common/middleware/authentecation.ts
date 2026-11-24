@@ -25,7 +25,7 @@ export async function authentication(
     const { authorization } = req.headers;
 
     if (!authorization) {
-        throw new AppError("authorization is required" ,401)
+        throw new AppError("authorization is required", 401);
     }
 
     const [scheme, token] = authorization.split(" ");
@@ -55,7 +55,10 @@ export async function authentication(
     }
     if (!user.isConfirmed) throw new AppError("you need to be confirmed", 403);
 
-    if ((user.changeCredentialsAt?.getTime() ?? 0) > (payload.iat ?? 0) * 1000) {
+    if (
+        (user.changeCredentialsAt?.getTime() ?? 0) >
+        (payload.iat ?? 0) * 1000
+    ) {
         throw new AppError("token has expired", 401);
     }
     const ttl = await RedisService.getTTL({
