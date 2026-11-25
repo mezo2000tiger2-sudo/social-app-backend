@@ -6,7 +6,7 @@ import {
     S3Client,
     ListObjectsCommand,
     DeleteObjectCommand,
-    DeleteObjectsCommand
+    DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
 import {
     AWS_REIGION,
@@ -15,7 +15,7 @@ import {
     AWS_S3_Secret_ACCESS_KEY,
     AWS_S3_ENDPOINT,
 } from "../../config/config.service.js";
-import { StoreEnum } from "../enum/multer.enum.js";
+import { StoreEnum } from "../../common/enum/multer.enum.js";
 import { createReadStream } from "node:fs";
 import { Upload } from "@aws-sdk/lib-storage";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -128,12 +128,12 @@ export default class S3Service {
         return await this.client.send(command);
     }
     async deleteFiles(Keys: string[]) {
-        const mappedKeys=Keys.map((key)=>{
-            return {Key:key}
-        })
+        const mappedKeys = Keys.map((key) => {
+            return { Key: key };
+        });
         const command = new DeleteObjectsCommand({
-            Delete:{
-                Objects:mappedKeys
+            Delete: {
+                Objects: mappedKeys,
             },
             Bucket: AWS_S3_BUCKET_NAME,
         });
@@ -148,17 +148,17 @@ export default class S3Service {
     }
     async getFiles(FolderName: string) {
         const command = new ListObjectsCommand({
-            Prefix:`social_media_app/${FolderName}`,
+            Prefix: `social_media_app/${FolderName}`,
             Bucket: AWS_S3_BUCKET_NAME,
         });
         return await this.client.send(command);
     }
     async deleteFolder(FolderName: string) {
-        const {Contents}=await this.getFiles(FolderName)
-        const mappedData=Contents?.map((k)=>{
-            return k.Key
-        })
-        return this.deleteFiles(mappedData as string[])
+        const { Contents } = await this.getFiles(FolderName);
+        const mappedData = Contents?.map((k) => {
+            return k.Key;
+        });
+        return this.deleteFiles(mappedData as string[]);
     }
     async createPreSignedUrl({
         path = "General",

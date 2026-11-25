@@ -16,8 +16,9 @@ import userRoute from "./DB/modules/user/user.controller.js";
 import { GlobalSuccessResponse } from "./common/middleware/successResponse.js";
 import connectDb from "./DB/connectDB.js";
 import RedisService from "./DB/connectRedis.js";
-import S3Service from "./common/security/s3.service.js";
+import S3Service from "./DB/services/s3.service.js";
 import { pipeline } from "node:stream/promises";
+import notificationService from "./DB/services/notification.service.js";
 
 const port = PORT;
 const app = express();
@@ -46,6 +47,18 @@ const bootstrap = async () => {
     app.use("/auth", authRoute);
     app.use("/users", userRoute);
 
+    app.post(
+        "/send-notification",
+        async(req: Request, res: Response, next: NextFunction) => {
+            await notificationService.sendNotification({
+                token: req.body.token,
+                data: {
+                    title: "hihihihih",
+                    body: "hihihihih",
+                },
+            });
+        },
+    );
     app.get(
         "/upload/pre-signed/*path",
         async (req: Request, res: Response, next: NextFunction) => {
@@ -68,12 +81,15 @@ const bootstrap = async () => {
         async (req: Request, res: Response, next: NextFunction) => {
             const { folderName } = req.query;
             if (typeof folderName !== "string") {
-                throw new AppError("folderName query parameter is required", 400);
+                throw new AppError(
+                    "folderName query parameter is required",
+                    400,
+                );
             }
-            const {Contents} = await new S3Service().getFiles(folderName);
-            const data=Contents?.map((file)=>{
-                return{key:file.Key}
-            })
+            const { Contents } = await new S3Service().getFiles(folderName);
+            const data = Contents?.map((file) => {
+                return { key: file.Key };
+            });
 
             res.locals.data = data;
             res.locals.statusCode = 200;

@@ -3,11 +3,11 @@ import { IUser } from "../../models/user.model.js";
 import { UserRepository } from "../../repositories/user.repository.js";
 import { Compare, Hash } from "../../../common/security/hash.js";
 import { AppError } from "../../../common/utils/globalErrorHandling.js";
-import S3Service  from "../../../common/security/s3.service.js";
+import S3Service from "../../services/s3.service.js";
 
 class AuthService {
     private readonly _userRepo = new UserRepository();
-    private readonly _S3Service=new S3Service
+    private readonly _S3Service = new S3Service();
 
     getProfile = async (req: Request, res: Response, next: NextFunction) => {
         const user = req.user;
@@ -22,9 +22,9 @@ class AuthService {
         const { fName, lName, age, gender, phone } = req.body;
         const key = req.file
             ? await this._S3Service.uploadFile({
-                file: req.file,
-                path: "Avatar",
-            })
+                  file: req.file,
+                  path: "Avatar",
+              })
             : undefined;
         const updateQuery: Partial<IUser> = {};
         if (fName !== undefined) updateQuery.fName = fName;
@@ -43,7 +43,7 @@ class AuthService {
 
         res.locals.data = updatedUser;
         res.locals.statusCode = 200;
-        next()
+        next();
     };
 
     searchUsers = async (req: Request, res: Response, next: NextFunction) => {
@@ -80,7 +80,7 @@ class AuthService {
         const { oldpassword, newpassword } = req.body;
         const user = req.user!;
         if (!Compare(oldpassword, user.password)) {
-            throw new AppError("inValid old password", 401)
+            throw new AppError("inValid old password", 401);
         }
         user.password = Hash(newpassword);
         user.changeCredentialsAt = new Date();
@@ -90,7 +90,6 @@ class AuthService {
                 password: user.password,
                 changeCredentialsAt: user.changeCredentialsAt,
             },
-            
         });
 
         res.locals.data = updatedUser;
